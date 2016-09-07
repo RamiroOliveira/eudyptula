@@ -1,7 +1,0 @@
-root@arc-dev:/sys/kernel/debug# cat /sys/kernel/debug/eudyptula/id 
-2a86d024c0e5
-root@arc-dev:/sys/kernel/debug# echo 2a86d024c0e5 > /sys/kernel/debug/eudyptula/id 
-root@arc-dev:/sys/kernel/debug# echo foo  > /sys/kernel/debug/eudyptula/id 
-bash: echo: write error: Invalid argument
-root@arc-dev:/sys/kernel/debug# 
-
