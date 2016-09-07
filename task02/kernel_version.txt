@@ -1,3 +1,0 @@
-ramiro ~ $ uname -a
-Linux arc-dev 4.3.0-rc6-00108-gce1fad2 #1 SMP Tue Oct 20 11:12:25 WEST 2015 x86_64 GNU/Linux
-
