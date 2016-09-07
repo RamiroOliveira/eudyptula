@@ -1,0 +1,12 @@
+diff -uNpr -x linux/Documentation/dontdiff linux_old/Makefile linux/Makefile
+--- linux_old/Makefile	2015-10-21 13:17:47.481977653 +0100
++++ linux/Makefile	2015-10-21 13:06:04.344506236 +0100
+@@ -1,7 +1,7 @@
+ VERSION = 4
+ PATCHLEVEL = 3
+ SUBLEVEL = 0
+-EXTRAVERSION = -rc6
++EXTRAVERSION = -eudyptula
+ NAME = Blurry Fish Butt
+ 
+ # *DOCUMENTATION*

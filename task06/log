@@ -1,0 +1,6 @@
+ramiro ~/disk/training/eudyptula/task06 $ cat /dev/eudyptula 
+2a86d024c0e5
+ramiro ~/disk/training/eudyptula/task06 $ echo "foo" > /dev/eudyptula 
+bash: echo: write error: Invalid argument
+ramiro ~/disk/training/eudyptula/task06 $ echo "2a86d024c0e5" > /dev/eudyptula 
+ramiro ~/disk/training/eudyptula/task06 $ 
