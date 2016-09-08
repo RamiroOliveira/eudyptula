@@ -2,6 +2,7 @@
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/debugfs.h>
+#include <linux/jiffies.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("roliveir");
@@ -51,6 +52,7 @@ static const struct file_operations hello_fops = {
 static int __init hello_world(void)
 {
 	struct dentry *hello;
+	struct dentry *jiff;
 
 	debugfs = debugfs_create_dir("eudyptula", NULL);
 	if (!debugfs)
@@ -58,6 +60,13 @@ static int __init hello_world(void)
 
 	hello = debugfs_create_file("id", 0666, debugfs, NULL, &hello_fops);
 	if (!hello) {
+		debugfs_remove_recursive(debugfs);
+		debugfs = NULL;
+		return -ENOMEM;
+	}
+
+	jiff = debugfs_create_u64("jiffies", 0444, debugfs, (u64 *)&jiffies);
+	if (!jiff) {
 		debugfs_remove_recursive(debugfs);
 		debugfs = NULL;
 		return -ENOMEM;
