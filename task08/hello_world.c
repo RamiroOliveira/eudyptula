@@ -11,6 +11,8 @@ MODULE_DESCRIPTION("Hello World");
 
 #define EUDYPTULA_ID "2a86d024c0e5"
 
+struct dentry *debugfs;
+
 static ssize_t hello_read(struct file *file, char *buf,
 				size_t count, loff_t *ppos)
 {
@@ -48,16 +50,14 @@ static const struct file_operations hello_fops = {
 
 static int __init hello_world(void)
 {
-	struct dentry *file;
-	struct dentry *debugfs;
+	struct dentry *hello;
 
 	debugfs = debugfs_create_dir("eudyptula", NULL);
 	if (!debugfs)
 		return -ENOMEM;
 
-	file = debugfs_create_file("id", 0666, debugfs, NULL, &hello_fops);
-
-	if (!file) {
+	hello = debugfs_create_file("id", 0666, debugfs, NULL, &hello_fops);
+	if (!hello) {
 		debugfs_remove_recursive(debugfs);
 		debugfs = NULL;
 		return -ENOMEM;
@@ -68,7 +68,7 @@ static int __init hello_world(void)
 
 static void __exit bye_world(void)
 {
-
+	debugfs_remove_recursive(debugfs);
 }
 
 module_init(hello_world);
