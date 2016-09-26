@@ -12,121 +12,112 @@ MODULE_DESCRIPTION("Hello World");
 
 #define EUDYPTULA_ID "2a86d024c0e5"
 
-struct dentry *debugfs;
 static DEFINE_SEMAPHORE(foo_semaphore);
+
 static char foo_data[PAGE_SIZE];
 
-static ssize_t hello_read(struct file *file, char *buf,
-				size_t count, loff_t *ppos)
+static struct kobject *eudyptula;
+
+static ssize_t id_show(struct kobject *kobj, struct kobj_attribute *attr,
+			char *buf)
 {
-	return simple_read_from_buffer(buf, count, ppos, EUDYPTULA_ID,
-				strlen(EUDYPTULA_ID));
+	return sprintf(buf, "%s\n", EUDYPTULA_ID);
 }
 
-static ssize_t hello_write(struct file *file, const char __user *buf,
-				size_t count, loff_t *ppos)
+static ssize_t id_store(struct kobject *kobj, struct kobj_attribute *attr,
+			 const char *buf, size_t count)
 {
-	char tmp[EUDYPTULA_ID_SIZE];
-	int result = 0;
+	int ret;
 
-	if (count == EUDYPTULA_ID_SIZE) {
-		result = simple_write_to_buffer(tmp, EUDYPTULA_ID_SIZE-1,
-						ppos, buf, count) + 1;
+	ret = strncmp(buf, EUDYPTULA_ID, strlen(EUDYPTULA_ID));
 
-		tmp[EUDYPTULA_ID_SIZE - 1] = '\0';
-	} else
-		result = -EINVAL;
+	if (ret != 0)
+		return -EINVAL;
 
-	if ((*ppos) == strlen(EUDYPTULA_ID))
-		result = strncmp(tmp, EUDYPTULA_ID, strlen(EUDYPTULA_ID)) ?
-			-EINVAL : result;
-
-	return result;
+	return count;
 }
 
+static struct kobj_attribute id_attribute =
+	__ATTR_RW(id);
 
-static const struct file_operations hello_fops = {
-	.owner		= THIS_MODULE,
-	.read		= hello_read,
-	.write		= hello_write,
+static ssize_t jiffies_show(struct kobject *kobj, struct kobj_attribute *attr,
+			char *buf)
+{
+	return sprintf(buf, "%lu\n", jiffies);
+}
+
+static struct kobj_attribute jiffies_attribute =
+	__ATTR_RO(jiffies);
+
+static ssize_t foo_show(struct kobject *kobj, struct kobj_attribute *attr,
+			char *buf)
+{
+	int ret = 0;
+
+	down(&foo_semaphore);
+
+	ret = sprintf(buf, "%s", foo_data);
+
+	up(&foo_semaphore);
+
+	return ret;
+}
+
+static ssize_t foo_store(struct kobject *kobj, struct kobj_attribute *attr,
+			 const char *buf, size_t count)
+{
+	down(&foo_semaphore);
+
+	strcpy(foo_data, buf);
+
+	up(&foo_semaphore);
+
+	return count;
+}
+
+static struct kobj_attribute foo_attribute =
+	__ATTR_RW(foo);
+
+static struct attribute *attrs[] = {
+	&id_attribute.attr,
+	&jiffies_attribute.attr,
+	&foo_attribute.attr,
+	NULL,	/* need to NULL terminate the list of attributes */
 };
 
-static ssize_t foo_read(struct file *file, char *buf,
-				size_t count, loff_t *ppos)
-{
-	int result = 0;
 
-	down(&foo_semaphore);
-
-	result = simple_read_from_buffer(buf, count, ppos, foo_data,
-				strlen(foo_data));
-
-	up(&foo_semaphore);
-
-	return result;
-}
-
-static ssize_t foo_write(struct file *file, const char __user *buf,
-				size_t count, loff_t *ppos)
-{
-	int result = 0;
-
-	down(&foo_semaphore);
-
-	if (count <= PAGE_SIZE) {
-		result = simple_write_to_buffer(foo_data, PAGE_SIZE,
-						ppos, buf, count);
-	} else
-		result = -EINVAL;
-
-	up(&foo_semaphore);
-
-	return result;
-}
-
-static const struct file_operations foo_fops = {
-	.owner		= THIS_MODULE,
-	.read		= foo_read,
-	.write		= foo_write,
+static struct attribute_group attr_group = {
+	.attrs = attrs,
 };
 
 static int __init hello_world(void)
 {
-	struct dentry *hello;
-	struct dentry *jiff;
-	struct dentry *foo;
+	int retval;
 
-	debugfs = debugfs_create_dir("eudyptula", NULL);
-	if (!debugfs)
+	/*
+	 * Create a simple kobject with the name of "kobject_example",
+	 * located under /sys/kernel/
+	 *
+	 * As this is a simple directory, no uevent will be sent to
+	 * userspace.  That is why this function should not be used for
+	 * any type of dynamic kobjects, where the name and number are
+	 * not known ahead of time.
+	 */
+	eudyptula = kobject_create_and_add("eudyptula", kernel_kobj);
+	if (!eudyptula)
 		return -ENOMEM;
 
-	hello = debugfs_create_file("id", 0666, debugfs, NULL, &hello_fops);
-	if (!hello) {
-		debugfs_remove_recursive(debugfs);
-		debugfs = NULL;
-		return -ENOMEM;
-	}
+	/* Create the files associated with this kobject */
+	retval = sysfs_create_group(eudyptula, &attr_group);
+	if (retval)
+		kobject_put(eudyptula);
 
-	jiff = debugfs_create_u64("jiffies", 0444, debugfs, (u64 *)&jiffies);
-	if (!jiff) {
-		debugfs_remove_recursive(debugfs);
-		debugfs = NULL;
-		return -ENOMEM;
-	}
-
-	foo = debugfs_create_file("foo", 0644, debugfs, NULL, &foo_fops);
-	if (!foo) {
-		debugfs_remove_recursive(debugfs);
-		debugfs = NULL;
-		return -ENOMEM;
-	}
-
-	return 0;
+	return retval;
 }
 
 static void __exit bye_world(void)
 {
-	debugfs_remove_recursive(debugfs);
+	kobject_put(eudyptula);
 }
 
 module_init(hello_world);
