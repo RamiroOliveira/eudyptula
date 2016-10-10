@@ -94,15 +94,6 @@ static int __init hello_world(void)
 {
 	int retval;
 
-	/*
-	 * Create a simple kobject with the name of "kobject_example",
-	 * located under /sys/kernel/
-	 *
-	 * As this is a simple directory, no uevent will be sent to
-	 * userspace.  That is why this function should not be used for
-	 * any type of dynamic kobjects, where the name and number are
-	 * not known ahead of time.
-	 */
 	eudyptula = kobject_create_and_add("eudyptula", kernel_kobj);
 	if (!eudyptula)
 		return -ENOMEM;
