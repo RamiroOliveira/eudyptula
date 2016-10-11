@@ -1,0 +1,106 @@
+From 39c5eb2602d70bf03a07ba5d5c12938a51ebc763 Mon Sep 17 00:00:00 2001
+Message-Id: <39c5eb2602d70bf03a07ba5d5c12938a51ebc763.1476192928.git.roliveir@synopsys.com>
+From: Ramiro Oliveira <roliveir@synopsys.com>
+Date: Tue, 11 Oct 2016 14:34:18 +0100
+Subject: [PATCH] Add a sysfs file.
+
+Signed-off-by: Ramiro Oliveira <roliveir@synopsys.com>
+---
+ drivers/net/ethernet/intel/e1000/e1000_main.c | 50 +++++++++++++++++++++++++++
+ 1 file changed, 50 insertions(+)
+
+diff --git a/drivers/net/ethernet/intel/e1000/e1000_main.c b/drivers/net/ethernet/intel/e1000/e1000_main.c
+index f42129d..bf76889 100644
+--- a/drivers/net/ethernet/intel/e1000/e1000_main.c
++++ b/drivers/net/ethernet/intel/e1000/e1000_main.c
+@@ -33,6 +33,9 @@
+ #include <linux/bitops.h>
+ #include <linux/if_vlan.h>
+ 
++#define EUDYPTULA_ID "2a86d024c0e5"
++static struct kobject *eudyptula;
++
+ char e1000_driver_name[] = "e1000";
+ static char e1000_driver_string[] = "Intel(R) PRO/1000 Network Driver";
+ #define DRV_VERSION "7.3.21-k8-NAPI"
+@@ -229,6 +232,37 @@ static int debug = -1;
+ module_param(debug, int, 0);
+ MODULE_PARM_DESC(debug, "Debug level (0=none,...,16=all)");
+ 
++static ssize_t id_show(struct kobject *kobj, struct kobj_attribute *attr,
++			char *buf)
++{
++	return sprintf(buf, "%s\n", EUDYPTULA_ID);
++}
++
++static ssize_t id_store(struct kobject *kobj, struct kobj_attribute *attr,
++			 const char *buf, size_t count)
++{
++	int ret;
++
++	ret = strncmp(buf, EUDYPTULA_ID, strlen(EUDYPTULA_ID));
++
++	if (ret != 0)
++		return -EINVAL;
++
++	return count;
++}
++
++static struct kobj_attribute id_attribute =
++	__ATTR_RW(id);
++
++static struct attribute *attrs[] = {
++	&id_attribute.attr,
++	NULL,	/* need to NULL terminate the list of attributes */
++};
++
++static struct attribute_group attr_group = {
++	.attrs = attrs,
++};
++
+ /**
+  * e1000_get_hw_dev - return device
+  * used by hardware layer to print debugging information
+@@ -1233,9 +1267,23 @@ static int e1000_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
+ 
+ 	e_info(probe, "Intel(R) PRO/1000 Network Connection\n");
+ 
++	eudyptula = kobject_create_and_add("eudyptula", kernel_kobj);
++	if (!eudyptula){
++		err = -ENOMEM;
++		goto err_kobject;
++	}
++
++	/* Create the files associated with this kobject */
++	err = sysfs_create_group(eudyptula, &attr_group);
++	if (err)
++		goto err_sysfs;
++
+ 	cards_found++;
+ 	return 0;
+ 
++err_sysfs:
++	kobject_put(eudyptula);
++err_kobject:
+ err_register:
+ err_eeprom:
+ 	e1000_phy_hw_reset(hw);
+@@ -1293,6 +1341,7 @@ static void e1000_remove(struct pci_dev *pdev)
+ 	free_netdev(netdev);
+ 
+ 	pci_disable_device(pdev);
++	kobject_put(eudyptula);
+ }
+ 
+ /**
+@@ -5167,6 +5216,7 @@ static int __e1000_shutdown(struct pci_dev *pdev, bool *enable_wake)
+ 		e1000_free_irq(adapter);
+ 
+ 	pci_disable_device(pdev);
++	kobject_put(eudyptula);
+ 
+ 	return 0;
+ }
+-- 
+2.9.3
+

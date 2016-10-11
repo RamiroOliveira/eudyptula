@@ -1,0 +1,6 @@
+root@arc-dev:/home/ramiro# echo 2a86d024c0e52 > /sys/kernel/eudyptula/id 
+root@arc-dev:/home/ramiro# echo 286d024c0e52 > /sys/kernel/eudyptula/id 
+bash: echo: write error: Invalid argument
+root@arc-dev:/home/ramiro# cat /sys/kernel/eudyptula/id 
+2a86d024c0e5
+
