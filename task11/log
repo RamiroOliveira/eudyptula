@@ -1,6 +1,6 @@
-root@arc-dev:/home/ramiro# echo 2a86d024c0e52 > /sys/kernel/eudyptula/id 
-root@arc-dev:/home/ramiro# echo 286d024c0e52 > /sys/kernel/eudyptula/id 
+root@arc-dev:/home/ramiro# echo 2a86d024c0e52 > /sys/devices/pci0000\:00/0000\:00\:03.0/net/eth0/eudyptula/id
+root@arc-dev:/home/ramiro# echo 286d024c0e52 > /sys/devices/pci0000\:00/0000\:00\:03.0/net/eth0/eudyptula/id
 bash: echo: write error: Invalid argument
-root@arc-dev:/home/ramiro# cat /sys/kernel/eudyptula/id 
+root@arc-dev:/home/ramiro# cat /sys/devices/pci0000\:00/0000\:00\:03.0/net/eth0/eudyptula/id
 2a86d024c0e5
 
