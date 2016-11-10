@@ -1,0 +1,4 @@
+ramiro (master) ~/eudyptula/eudyptula/task12 $ sudo insmod hello_world.ko 
+ramiro (master) ~/eudyptula/eudyptula/task12 $ dmesg | tail -2
+[  291.117307] id 3 = Dave
+[  291.117314] id 42 not found
