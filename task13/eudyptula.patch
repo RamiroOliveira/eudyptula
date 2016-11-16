@@ -1,0 +1,51 @@
+diff --git a/task13/hello_world.c b/task13/hello_world.c
+index 12cd033..6209cb9 100755
+--- a/task13/hello_world.c
++++ b/task13/hello_world.c
+@@ -3,6 +3,8 @@
+ #include <linux/list.h>
+ #include <linux/slab.h>
+ 
++struct kmem_cache *mem_cache;
++
+ struct identity {
+ 	char name[20];
+ 	int id;
+@@ -16,7 +18,7 @@ int identity_create(char *name, int id)
+ {
+ 	struct identity *temp;
+ 
+-	temp = kmalloc(sizeof(*temp), GFP_KERNEL);
++	temp = kmem_cache_alloc(mem_cache, GFP_KERNEL);
+ 	if (!temp)
+ 		return -ENOMEM;
+ 
+@@ -48,7 +50,7 @@ void identity_destroy(int id)
+ 	list_for_each_entry_safe(temp, next, &identity_list, list) {
+ 		if (temp->id == id) {
+ 			list_del(&temp->list);
+-			kfree(temp);
++			kmem_cache_free(mem_cache, temp);
+ 		}
+ 	}
+ }
+@@ -57,6 +59,11 @@ static int __init hello_init(void)
+ {
+ 	struct identity *temp;
+ 
++	mem_cache = kmem_cache_create("eudyptula_cache",
++			sizeof(struct identity), 0, 0, NULL);
++	if (!mem_cache)
++		return -ENOMEM;
++
+ 	identity_create("Alice", 1);
+ 	identity_create("Bob", 2);
+ 	identity_create("Dave", 3);
+@@ -85,6 +92,7 @@ static int __init hello_init(void)
+ 
+ static void __exit hello_exit(void)
+ {
++	kmem_cache_destroy(mem_cache);
+ 	return;
+ }
+ 
