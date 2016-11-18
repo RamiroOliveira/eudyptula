@@ -1,0 +1,6 @@
+ramiro ~ $ sudo cat /proc/27/id
+2a86d024c0e5
+ramiro ~ $ sudo cat /proc/27/id
+2a86d024c0e6
+ramiro ~ $ sudo cat /proc/33/id
+2a86d024c0e5

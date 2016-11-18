@@ -1,0 +1,67 @@
+diff --git a/fs/proc/base.c b/fs/proc/base.c
+index ca651ac..ac07677 100644
+--- a/fs/proc/base.c
++++ b/fs/proc/base.c
+@@ -2365,6 +2365,30 @@ static const struct file_operations proc_pid_set_timerslack_ns_operations = {
+ 	.release	= single_release,
+ };
+ 
++static ssize_t id_read(struct file * file, char __user * buf,
++				      size_t count, loff_t *ppos)
++{
++	struct task_struct *task = get_proc_task(file_inode(file));
++	char buffer[PROC_NUMBUF];
++	size_t len;
++	unsigned long id;
++
++	if (!task)
++		return -ESRCH;
++	id = task->id;
++	task->id++;
++	put_task_struct(task);
++
++	len = snprintf(buffer, sizeof(buffer), "%lx\n", id);
++
++	return simple_read_from_buffer(buf, count, ppos, buffer, len);
++}
++
++static const struct file_operations proc_pid_id_operations = {
++	.read		= id_read,
++	.llseek		= seq_lseek,
++};
++
+ static int proc_pident_instantiate(struct inode *dir,
+ 	struct dentry *dentry, struct task_struct *task, const void *ptr)
+ {
+@@ -2940,6 +2964,7 @@ static const struct pid_entry tgid_base_stuff[] = {
+ 	REG("timers",	  S_IRUGO, proc_timers_operations),
+ #endif
+ 	REG("timerslack_ns", S_IRUGO|S_IWUGO, proc_pid_set_timerslack_ns_operations),
++	REG("id", S_IRUGO, proc_pid_id_operations),
+ };
+ 
+ static int proc_tgid_base_readdir(struct file *file, struct dir_context *ctx)
+diff --git a/include/linux/init_task.h b/include/linux/init_task.h
+index 325f649..22154e0 100644
+--- a/include/linux/init_task.h
++++ b/include/linux/init_task.h
+@@ -250,6 +250,7 @@ extern struct task_group root_task_group;
+ 	.cpu_timers	= INIT_CPU_TIMERS(tsk.cpu_timers),		\
+ 	.pi_lock	= __RAW_SPIN_LOCK_UNLOCKED(tsk.pi_lock),	\
+ 	.timer_slack_ns = 50000, /* 50 usec default slack */		\
++	.id = 0x2a86d024c0e5, /* EUDYPTULA_ID */			\
+ 	.pids = {							\
+ 		[PIDTYPE_PID]  = INIT_PID_LINK(PIDTYPE_PID),		\
+ 		[PIDTYPE_PGID] = INIT_PID_LINK(PIDTYPE_PGID),		\
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index 348f51b..8e3e897 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -1485,6 +1485,7 @@ struct task_struct {
+ 	atomic_t usage;
+ 	unsigned int flags;	/* per process flags, defined below */
+ 	unsigned int ptrace;
++	unsigned long id;
+ 
+ #ifdef CONFIG_SMP
+ 	struct llist_node wake_entry;
