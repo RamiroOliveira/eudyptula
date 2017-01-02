@@ -1,0 +1,1 @@
+Linux arc-dev 4.9.0-rc5+ #5 SMP Fri Nov 18 15:43:22 WET 2016 x86_64 GNU/Linux

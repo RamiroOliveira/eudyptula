@@ -1,5 +1,23 @@
+From a9ba89816e61db9e6fadbda70c073660803b3698 Mon Sep 17 00:00:00 2001
+Message-Id: <a9ba89816e61db9e6fadbda70c073660803b3698.1482925774.git.Ramiro.Oliveira@synopsys.com>
+From: Ramiro Oliveira <Ramiro.Oliveira@synopsys.com>
+Date: Wed, 28 Dec 2016 11:49:10 +0000
+Subject: [PATCH] Eudyptula
+
+Signed-off-by: Ramiro Oliveira <Ramiro.Oliveira@synopsys.com>
+---
+ arch/x86/entry/syscalls/syscall_32.tbl |  1 +
+ arch/x86/entry/syscalls/syscall_64.tbl |  1 +
+ include/linux/syscalls.h               |  1 +
+ init/Kconfig                           |  7 +++++++
+ init/Makefile                          |  2 ++
+ init/eudyptula.c                       | 17 +++++++++++++++++
+ kernel/sys_ni.c                        |  3 +++
+ 7 files changed, 32 insertions(+)
+ create mode 100644 init/eudyptula.c
+
 diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-index 2b36185..d2f7561 100644
+index 2b3618542544..d2f75617ebfa 100644
 --- a/arch/x86/entry/syscalls/syscall_32.tbl
 +++ b/arch/x86/entry/syscalls/syscall_32.tbl
 @@ -389,3 +389,4 @@
@@ -8,7 +26,7 @@ index 2b36185..d2f7561 100644
  382	i386	pkey_free		sys_pkey_free
 +383	i386	eudyptula		sys_eudyptula
 diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index e93ef0b..b86fe05 100644
+index e93ef0b38db8..b86fe05061d8 100644
 --- a/arch/x86/entry/syscalls/syscall_64.tbl
 +++ b/arch/x86/entry/syscalls/syscall_64.tbl
 @@ -338,6 +338,7 @@
@@ -20,34 +38,34 @@ index e93ef0b..b86fe05 100644
  #
  # x32-specific system call numbers start at 512 to avoid cache impact
 diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 91a740f..2a4d37d 100644
+index 91a740f6b884..64ffc0a0c7e5 100644
 --- a/include/linux/syscalls.h
 +++ b/include/linux/syscalls.h
 @@ -902,5 +902,6 @@ asmlinkage long sys_pkey_mprotect(unsigned long start, size_t len,
  				  unsigned long prot, int pkey);
  asmlinkage long sys_pkey_alloc(unsigned long flags, unsigned long init_val);
  asmlinkage long sys_pkey_free(int pkey);
-+asmlinkage long sys_eudyptula(int high_id, int low_id);
++asmlinkage long sys_eudyptula(unsigned int high_id, unsigned int low_id);
  
  #endif
 diff --git a/init/Kconfig b/init/Kconfig
-index 34407f1..2d9ba0b 100644
+index 223b734abccd..d2dc96969deb 100644
 --- a/init/Kconfig
 +++ b/init/Kconfig
-@@ -2127,4 +2127,11 @@ config ASN1
+@@ -2157,4 +2157,11 @@ config ASN1
  	  inform it as to what tags are to be expected in a stream and what
  	  functions to call on what tags.
  
 +config EUDYPTULA_SYSCALL
 +	bool "Add Eudyptula Challenge Syscall"
 +	help
-+	  Add the eudyptula challenge syscall to the kernel. This syscall will 
++	  Add the eudyptula challenge syscall to the kernel. This syscall will
 +	  look at two values, mush them together, and then compare with the user
-+	  eudyptula ID.	
++	  eudyptula ID.
 +
  source "kernel/Kconfig.locks"
 diff --git a/init/Makefile b/init/Makefile
-index c4fb455..466799e 100644
+index c4fb45525d08..466799eb20ef 100644
 --- a/init/Makefile
 +++ b/init/Makefile
 @@ -16,6 +16,8 @@ ifneq ($(CONFIG_ARCH_INIT_TASK),y)
@@ -59,14 +77,40 @@ index c4fb455..466799e 100644
  mounts-y			:= do_mounts.o
  mounts-$(CONFIG_BLK_DEV_RAM)	+= do_mounts_rd.o
  mounts-$(CONFIG_BLK_DEV_INITRD)	+= do_mounts_initrd.o
+diff --git a/init/eudyptula.c b/init/eudyptula.c
+new file mode 100644
+index 000000000000..fe4d0191c6f4
+--- /dev/null
++++ b/init/eudyptula.c
+@@ -0,0 +1,17 @@
++#include <linux/kernel.h>
++#include <linux/syscalls.h>
++#include <linux/init.h>
++#include <linux/sched.h>
++#include <linux/errno.h>
++
++#define ID (0x2a86d024c0e5)
++
++SYSCALL_DEFINE2(eudyptula, unsigned int, high_id, unsigned int, low_id)
++{
++	u64 id = ID;
++
++	if (((u64)high_id << 32 | low_id) == id)
++		return 0;
++	else
++		return -EINVAL;
++}
 diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
-index 635482e..e8087fb 100644
+index 8acef8576ce9..f79f0509e5dc 100644
 --- a/kernel/sys_ni.c
 +++ b/kernel/sys_ni.c
-@@ -255,3 +255,6 @@ cond_syscall(sys_membarrier);
+@@ -258,3 +258,6 @@ cond_syscall(sys_membarrier);
  cond_syscall(sys_pkey_mprotect);
  cond_syscall(sys_pkey_alloc);
  cond_syscall(sys_pkey_free);
 +
 +/* Eudyptula syscall */
 +cond_syscall(sys_eudyptula);
+-- 
+2.11.0
+
