@@ -1,0 +1,34 @@
+From e61b9ed119c05d0fcb8d7a9acaa33f0d5f1be066 Mon Sep 17 00:00:00 2001
+Message-Id: <e61b9ed119c05d0fcb8d7a9acaa33f0d5f1be066.1483454071.git.Ramiro.Oliveira@synopsys.com>
+From: Ramiro Oliveira <Ramiro.Oliveira@synopsys.com>
+Date: Tue, 3 Jan 2017 14:33:36 +0000
+Subject: [PATCH] staging: most: change dma_buf variable to __le16
+
+dma_buf is being cast to __le16 *, but it was defined as u16 *.
+sparse reported this error as:
+drivers/staging/most/hdm-usb/hdm_usb.c:158:16: warning: cast to restricted
+__le16
+
+This patch changes dma_buf from u16 to __le16.
+
+Signed-off-by: Ramiro Oliveira <Ramiro.Oliveira@synopsys.com>
+---
+ drivers/staging/most/hdm-usb/hdm_usb.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/staging/most/hdm-usb/hdm_usb.c b/drivers/staging/most/hdm-usb/hdm_usb.c
+index d6db0bd65be0..8a6da169bb12 100644
+--- a/drivers/staging/most/hdm-usb/hdm_usb.c
++++ b/drivers/staging/most/hdm-usb/hdm_usb.c
+@@ -145,7 +145,7 @@ static void wq_netinfo(struct work_struct *wq_obj);
+ static inline int drci_rd_reg(struct usb_device *dev, u16 reg, u16 *buf)
+ {
+ 	int retval;
+-	u16 *dma_buf = kzalloc(sizeof(u16), GFP_KERNEL);
++	__le16 *dma_buf = kzalloc(sizeof(__le16), GFP_KERNEL);
+ 	u8 req_type = USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE;
+ 
+ 	if (!dma_buf)
+-- 
+2.11.0
+
