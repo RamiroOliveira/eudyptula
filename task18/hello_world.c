@@ -66,7 +66,11 @@ static struct identity *identity_get(void)
 	struct identity *temp, *next;
 
 	list_for_each_entry_safe(temp, next, &identity_list, list) {
+
+		mutex_lock(&slock);
 		id_cnt--;
+		mutex_unlock(&slock);
+
 		list_del(&temp->list);
 		return temp;
 	}
@@ -82,11 +86,7 @@ static int eudyptula_thread(void *data)
 
 		set_current_state(TASK_RUNNING);
 
-		mutex_lock(&slock);
-
 		temp = identity_get();
-
-		mutex_unlock(&slock);
 
 		set_current_state(TASK_INTERRUPTIBLE);
 
@@ -106,8 +106,6 @@ static ssize_t hello_write(struct file *file, const char __user *buf,
 	char tmp[PAGE_SIZE];
 	int result = 0;
 
-	mutex_lock(&slock);
-
 	result = simple_write_to_buffer(tmp, PAGE_SIZE - 1, ppos, buf, count);
 
 	if (result > MAX_SIZE + 1)
@@ -115,7 +113,10 @@ static ssize_t hello_write(struct file *file, const char __user *buf,
 	else
 		tmp[count - 1] = '\0';
 
-	identity_create(tmp, id_cnt++);
+	identity_create(tmp, id_cnt);
+
+	mutex_lock(&slock);
+	id_cnt++;
 	mutex_unlock(&slock);
 
 	wake_up_interruptible(&wee_wait);
