@@ -44,7 +44,9 @@ static int identity_create(char *name, int id)
 
 	INIT_LIST_HEAD(&temp->list);
 
+	mutex_lock(&slock);
 	list_add_tail(&temp->list, &identity_list);
+	mutex_unlock(&slock);
 
 	return 0;
 }
@@ -53,27 +55,32 @@ static void identity_destroy(int id)
 {
 	struct identity *temp, *next;
 
+	mutex_lock(&slock);
 	list_for_each_entry_safe(temp, next, &identity_list, list) {
 		if (temp->id == id) {
 			list_del(&temp->list);
 			kfree(temp);
 		}
 	}
+	mutex_unlock(&slock);
 }
 
 static struct identity *identity_get(void)
 {
 	struct identity *temp, *next;
 
+	mutex_lock(&slock);
 	list_for_each_entry_safe(temp, next, &identity_list, list) {
 
-		mutex_lock(&slock);
 		id_cnt--;
+		list_del(&temp->list);
+
 		mutex_unlock(&slock);
 
-		list_del(&temp->list);
 		return temp;
 	}
+	mutex_unlock(&slock);
+
 	return NULL;
 }
 
@@ -84,11 +91,7 @@ static int eudyptula_thread(void *data)
 	while (!kthread_should_stop()) {
 		wait_event_interruptible(wee_wait, !kthread_should_stop());
 
-		set_current_state(TASK_RUNNING);
-
 		temp = identity_get();
-
-		set_current_state(TASK_INTERRUPTIBLE);
 
 		schedule_timeout(msecs_to_jiffies(5000));
 
@@ -115,9 +118,7 @@ static ssize_t hello_write(struct file *file, const char __user *buf,
 
 	identity_create(tmp, id_cnt);
 
-	mutex_lock(&slock);
 	id_cnt++;
-	mutex_unlock(&slock);
 
 	wake_up_interruptible(&wee_wait);
 
