@@ -1,0 +1,9 @@
+ramiro (master *) ~/eudyptula/eudyptula/task17 $ ls -la /dev/eudyptula 
+c-w--w--w- 1 root root 10, 56 Jan  9 19:24 /dev/eudyptula
+ramiro (master *) ~/eudyptula/eudyptula/task17 $ ps aux | grep eudyptula
+root     21457  0.0  0.0      0     0 ?        S    19:24   0:00 [eudyptula]
+ramiro   21481  0.0  0.0  12784   952 pts/0    S+   19:24   0:00 grep eudyptula
+ramiro (master *) ~/eudyptula/eudyptula/task17 $ sudo rmmod hello_world 
+ramiro (master) ~/eudyptula/eudyptula/task17 $ ps aux | grep eudyptula
+ramiro   21835  0.0  0.0  12784   980 pts/0    S+   19:26   0:00 grep eudyptula
+
