@@ -14,7 +14,7 @@ MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Ramiro Oliveira <roliveir@synopsys.com>");
 MODULE_DESCRIPTION("Eudyptula Netfilter");
 
-unsigned int hook_func(void *priv, struct sk_buff *skb,
+static unsigned int hook_func(void *priv, struct sk_buff *skb,
 			const struct nf_hook_state *state)
 {
 	struct tcphdr *tcp_header;
@@ -29,8 +29,8 @@ unsigned int hook_func(void *priv, struct sk_buff *skb,
 	user_data = (unsigned char *)((unsigned char *)tcp_header +
 		(tcp_header->doff * 4));
 
-	if(strstr(user_data, EUDYPTULA_ID) != NULL) 
-		pr_debug("%s\n",EUDYPTULA_ID);
+	if (strstr(user_data, EUDYPTULA_ID) != NULL)
+		pr_debug("%s\n", EUDYPTULA_ID);
 
 	return NF_ACCEPT;
 }
@@ -51,7 +51,7 @@ static int __init init_eudyptula_nf(void)
 
 static void __exit exit_eudyptula_nf(void)
 {
-	nf_unregister_hook(&nf_eudyptula); 
+	nf_unregister_hook(&nf_eudyptula);
 }
 
 module_init(init_eudyptula_nf);
