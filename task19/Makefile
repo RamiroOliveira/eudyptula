@@ -6,7 +6,9 @@ endif
 
 ccflags-y := -O1 -g -ggdb -Wall -DDEBUG
 
+CC := gcc
+
 all:
-	make -C $(KDIR) M=$$PWD modules V=0 
+	@$(MAKE) -C $(KDIR) M=$$PWD modules V=0 
 clean:
-	make -C $(KDIR) M=$$PWD clean V=0
+	@$(MAKE) -C $(KDIR) M=$$PWD clean V=0
